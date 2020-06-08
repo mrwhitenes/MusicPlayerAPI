@@ -29,5 +29,19 @@ namespace MusicPlayer.API.Controllers
             var artists = repository.GetArtists();
             return Ok(mapper.Map<IEnumerable<ArtistDto>>(artists));
         }
+
+        [HttpGet]
+        [Route("{artistId}")]
+        public ActionResult<ArtistDto> GetArtist(Guid artistId)
+        {
+            var artist = repository.GetArtist(artistId);
+
+            if (artist == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(mapper.Map<ArtistDto>(artist));
+        }
     }
 }
