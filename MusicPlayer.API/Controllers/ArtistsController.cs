@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using MusicPlayer.API.Models;
+using MusicPlayer.API.ResourceParameters;
 using MusicPlayer.API.Services;
 using System;
 using System.Collections.Generic;
@@ -24,9 +25,10 @@ namespace MusicPlayer.API.Controllers
         }
 
         [HttpGet]
-        public ActionResult<IEnumerable<ArtistDto>> GetArtists()
+        public ActionResult<IEnumerable<ArtistDto>> GetArtists(
+            [FromQuery] ArtistResourceParameters parameters)
         {
-            var artists = repository.GetArtists();
+            var artists = repository.GetArtists(parameters);
             return Ok(mapper.Map<IEnumerable<ArtistDto>>(artists));
         }
 
