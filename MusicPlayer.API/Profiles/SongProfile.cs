@@ -11,6 +11,7 @@ namespace MusicPlayer.API.Profiles
         public SongProfile()
         {
             CreateMap<Entities.Song, Models.SongDto>();
+            CreateMap<Models.SongForCreationDto, Entities.Song>();
         }
     }
 }

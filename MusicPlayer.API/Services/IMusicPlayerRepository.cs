@@ -1,4 +1,5 @@
 ﻿using MusicPlayer.API.Entities;
+using MusicPlayer.API.Models;
 using MusicPlayer.API.ResourceParameters;
 using System;
 using System.Collections.Generic;
@@ -13,8 +14,11 @@ namespace MusicPlayer.API.Services
         IEnumerable<Artist> GetArtists(
             ArtistResourceParameters parameters);
         Artist GetArtist(Guid artistId);
+        void AddArtist(Artist artist);
         IEnumerable<Song> GetSongs(Guid artistId);
         Song GetSong(Guid artistId, Guid songId);
+        void AddSongForArtist(Guid artistId, Song song);
         bool ArtistExists(Guid artistId);
+        bool Commit();
     }
 }

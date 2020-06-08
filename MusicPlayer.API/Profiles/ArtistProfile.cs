@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using MusicPlayer.API.Entities;
 using MusicPlayer.API.Helpers;
 using System;
 using System.Collections.Generic;
@@ -23,6 +24,11 @@ namespace MusicPlayer.API.Profiles
                 .ForMember(
                     dest => dest.MainCategory,
                     opt => opt.MapFrom(src => src.MainCategory.ToString())
+                );
+            CreateMap<Models.ArtistForCreationDto, Entities.Artist>()
+                .ForMember(
+                    dest => dest.MainCategory,
+                    opt => opt.MapFrom(src => Enum.Parse<MainCategories>(src.MainCategory))
                 );
         }
     }

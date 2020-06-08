@@ -1,5 +1,6 @@
 ﻿using MusicPlayer.API.DbContexts;
 using MusicPlayer.API.Entities;
+using MusicPlayer.API.Models;
 using MusicPlayer.API.ResourceParameters;
 using System;
 using System.Collections.Generic;
@@ -16,9 +17,49 @@ namespace MusicPlayer.API.Services
             this.context = context;
         }
 
+        public void AddArtist(Artist artist)
+        {
+            if (artist == null)
+            {
+                throw new ArgumentNullException(nameof(artist));
+            }
+
+            artist.Id = Guid.NewGuid();
+
+            foreach (var song in artist.Songs)
+            {
+                song.Id = Guid.NewGuid();
+            }
+
+            context.Artists.Add(artist);
+        }
+
+        public void AddSongForArtist(Guid artistId, Song song)
+        {
+            if (artistId == null)
+            {
+                throw new ArgumentNullException(nameof(artistId));
+            }
+
+            if (song == null)
+            {
+                throw new ArgumentNullException(nameof(song));
+            }
+
+            song.ArtistId = artistId;
+            song.Id = Guid.NewGuid();
+
+            context.Songs.Add(song);
+        }
+
         public bool ArtistExists(Guid artistId)
         {
             return context.Artists.Any(a => a.Id == artistId);
+        }
+
+        public bool Commit()
+        {
+            return context.SaveChanges() > 0;
         }
 
         public Artist GetArtist(Guid artistId)

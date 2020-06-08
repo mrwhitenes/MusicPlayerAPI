@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using MusicPlayer.API.Entities;
 using MusicPlayer.API.Models;
 using MusicPlayer.API.ResourceParameters;
 using MusicPlayer.API.Services;
@@ -33,7 +34,7 @@ namespace MusicPlayer.API.Controllers
         }
 
         [HttpGet]
-        [Route("{artistId}")]
+        [Route("{artistId}", Name = "GetArtist")]
         public ActionResult<ArtistDto> GetArtist(Guid artistId)
         {
             var artist = repository.GetArtist(artistId);
@@ -44,6 +45,20 @@ namespace MusicPlayer.API.Controllers
             }
 
             return Ok(mapper.Map<ArtistDto>(artist));
+        }
+
+        [HttpPost]
+        public ActionResult<ArtistDto> CreateArtist(
+            ArtistForCreationDto artist)
+        {
+            var artistEntity = mapper.Map<Artist>(artist);
+            repository.AddArtist(artistEntity);
+            repository.Commit();
+            var artistToReturn = mapper.Map<ArtistDto>(artistEntity);
+
+            return CreatedAtRoute("GetArtist",
+                new { artistId = artistEntity.Id },
+                artistToReturn);               
         }
     }
 }

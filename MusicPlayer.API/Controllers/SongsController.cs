@@ -38,7 +38,7 @@ namespace MusicPlayer.API.Controllers
             return Ok(mapper.Map<IEnumerable<SongDto>>(songs));
         }
 
-        [HttpGet("{songId}")]
+        [HttpGet("{songId}", Name = "GetSong")]
         public ActionResult<SongDto> GetSongForArtist(
             Guid artistId, Guid songId)
         {
@@ -55,6 +55,25 @@ namespace MusicPlayer.API.Controllers
             }
 
             return Ok(mapper.Map<SongDto>(song));
+        }
+
+        [HttpPost]
+        public ActionResult<SongDto> CreateSongForArtist(Guid artistId,
+            SongForCreationDto song)
+        {
+            if (!repository.ArtistExists(artistId))
+            {
+                return NotFound();
+            }
+
+            var songEntity = mapper.Map<Song>(song);
+            repository.AddSongForArtist(artistId, songEntity);
+            repository.Commit();
+            var songToReturn = mapper.Map<SongDto>(songEntity);
+
+            return CreatedAtRoute("GetSong",
+                new { artistId, songId = songEntity.Id },
+                songToReturn);
         }
     }
 }
