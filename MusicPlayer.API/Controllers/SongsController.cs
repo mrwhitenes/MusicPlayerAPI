@@ -76,11 +76,27 @@ namespace MusicPlayer.API.Controllers
                 songToReturn);
         }
 
-        [HttpPut]
+        [HttpPut("{songId}")]
         public IActionResult UpdateSongForArtist(Guid artistId,
-            Guid songId, ...)
+            Guid songId, SongForUpdateDto song)
         {
+            if (!repository.ArtistExists(artistId))
+            {
+                return NotFound();
+            }
 
+            var songEntity = repository.GetSong(artistId, songId);
+
+            if (songEntity == null)
+            {
+                return NotFound();
+            }
+
+            mapper.Map(song, songEntity);
+
+            repository.Commit();
+
+            return NoContent();
         }
     }
 }

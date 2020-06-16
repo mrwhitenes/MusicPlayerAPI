@@ -13,6 +13,8 @@ namespace MusicPlayer.API.Entities
         [Required]
         [StringLength(50)]
         public string Title { get; set; }
+        [StringLength(300)]
+        public string Description { get; set; }
         public Artist Artist { get; set; }
         public Guid ArtistId { get; set; }
     }

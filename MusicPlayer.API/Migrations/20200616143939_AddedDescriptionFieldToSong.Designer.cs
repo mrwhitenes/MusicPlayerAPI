@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MusicPlayer.API.DbContexts;
 
 namespace MusicPlayer.API.Migrations
 {
     [DbContext(typeof(MusicPlayerDbContext))]
-    partial class MusicPlayerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20200616143939_AddedDescriptionFieldToSong")]
+    partial class AddedDescriptionFieldToSong
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -117,42 +119,36 @@ namespace MusicPlayer.API.Migrations
                         {
                             Id = new Guid("e25ae3ef-8db4-4e52-8191-667019237502"),
                             ArtistId = new Guid("f6d8ab46-72c0-4c73-a2ea-e962e948f3d9"),
-                            Description = "Some description text",
                             Title = "Smooth Criminal"
                         },
                         new
                         {
                             Id = new Guid("d7aa4e17-4013-4961-816d-b810edf2c7bf"),
                             ArtistId = new Guid("d82b6d90-77e7-4106-b469-434229cd3aeb"),
-                            Description = "Some description text",
                             Title = "Rap God"
                         },
                         new
                         {
                             Id = new Guid("43028a7f-05dc-44fb-80e9-25a542bc0fd3"),
                             ArtistId = new Guid("fa9b5704-c2c1-46ef-84b1-bd6bbe6f46b6"),
-                            Description = "Some description text",
                             Title = "What a wonderful world"
                         },
                         new
                         {
                             Id = new Guid("63a8ffe7-4aa7-465b-bb2d-3168ee58ba54"),
                             ArtistId = new Guid("143057ab-a2db-42f7-8089-5088a2084801"),
-                            Description = "Some description text",
                             Title = "Little less conversation"
                         },
                         new
                         {
                             Id = new Guid("bd65e69b-7e97-4fc8-a180-2c86f50d86cd"),
                             ArtistId = new Guid("f6d8ab46-72c0-4c73-a2ea-e962e948f3d9"),
-                            Description = "Some description text",
                             Title = "They don't care about us"
                         },
                         new
                         {
                             Id = new Guid("92724b8e-4426-46c2-a7cf-8868e0489292"),
                             ArtistId = new Guid("331513d4-79b6-4dbf-af21-d7b6488074b5"),
-                            Description = "Some description text",
                             Title = "Hey Jude"
                         });
                 });
