@@ -15,7 +15,7 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
-      "applicationUrl": "http://localhost:51624"
+      "applicationUrl": "http://localhost:51044"
     },
     "MusicPlayer.API": {
       "commandName": "Project",

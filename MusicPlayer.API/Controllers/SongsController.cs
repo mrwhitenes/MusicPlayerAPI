@@ -75,5 +75,12 @@ namespace MusicPlayer.API.Controllers
                 new { artistId, songId = songEntity.Id },
                 songToReturn);
         }
+
+        [HttpPut]
+        public IActionResult UpdateSongForArtist(Guid artistId,
+            Guid songId, ...)
+        {
+
+        }
     }
 }
