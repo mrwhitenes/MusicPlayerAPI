@@ -67,6 +67,7 @@ namespace MusicPlayer.API.Controllers
             }
 
             var songEntity = mapper.Map<Song>(song);
+            songEntity.Id = Guid.NewGuid();
             repository.AddSongForArtist(artistId, songEntity);
             repository.Commit();
             var songToReturn = mapper.Map<SongDto>(songEntity);
@@ -89,7 +90,17 @@ namespace MusicPlayer.API.Controllers
 
             if (songEntity == null)
             {
-                return NotFound();
+                var songToCreate = mapper.Map<Song>(song);
+                songToCreate.Id = songId;
+
+                repository.AddSongForArtist(artistId, songToCreate);
+                repository.Commit();
+
+                var songToReturn = mapper.Map<SongDto>(songToCreate);
+
+                return CreatedAtRoute("GetSong",
+                    new { artistId, songId = songToCreate.Id },
+                    songToReturn);
             }
 
             mapper.Map(song, songEntity);

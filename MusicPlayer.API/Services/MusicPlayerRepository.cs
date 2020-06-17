@@ -47,7 +47,7 @@ namespace MusicPlayer.API.Services
             }
 
             song.ArtistId = artistId;
-            song.Id = Guid.NewGuid();
+            //song.Id = Guid.NewGuid();
 
             context.Songs.Add(song);
         }
