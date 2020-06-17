@@ -1,5 +1,9 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using MusicPlayer.API.Entities;
 using MusicPlayer.API.Models;
 using MusicPlayer.API.ResourceParameters;
@@ -60,5 +64,7 @@ namespace MusicPlayer.API.Controllers
                 new { artistId = artistEntity.Id },
                 artistToReturn);               
         }
+
+        
     }
 }

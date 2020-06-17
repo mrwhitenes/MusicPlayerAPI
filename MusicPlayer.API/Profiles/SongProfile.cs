@@ -12,7 +12,7 @@ namespace MusicPlayer.API.Profiles
         {
             CreateMap<Entities.Song, Models.SongDto>();
             CreateMap<Models.SongForCreationDto, Entities.Song>();
-            CreateMap<Models.SongForUpdateDto, Entities.Song>();
+            CreateMap<Models.SongForUpdateDto, Entities.Song>().ReverseMap();
         }
     }
 }

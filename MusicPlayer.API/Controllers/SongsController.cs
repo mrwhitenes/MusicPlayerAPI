@@ -4,7 +4,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using MusicPlayer.API.Entities;
 using MusicPlayer.API.Models;
 using MusicPlayer.API.Services;
@@ -90,6 +95,7 @@ namespace MusicPlayer.API.Controllers
 
             if (songEntity == null)
             {
+                // Upserting song with PUT
                 var songToCreate = mapper.Map<Song>(song);
                 songToCreate.Id = songId;
 
@@ -108,6 +114,65 @@ namespace MusicPlayer.API.Controllers
             repository.Commit();
 
             return NoContent();
+        }
+
+        [HttpPatch("{songId}")]
+        public IActionResult PartiallyUpdateSongForArtist(Guid artistId,
+            Guid songId, 
+            [FromBody] JsonPatchDocument<SongForUpdateDto> patchDocument)
+        {
+            if (!repository.ArtistExists(artistId))
+            {
+                return NotFound();
+            }
+
+            var songEntity = repository.GetSong(artistId, songId);
+
+            if (songEntity == null)
+            {
+                var songToCreate = new SongForUpdateDto();
+                patchDocument.ApplyTo(songToCreate, ModelState);
+
+                if (!TryValidateModel(songToCreate))
+                {
+                    return ValidationProblem(ModelState);
+                }
+
+                var songToCreateEntity = mapper.Map<Song>(songToCreate);
+                songToCreateEntity.Id = songId;
+
+                repository.AddSongForArtist(artistId, songToCreateEntity);
+                repository.Commit();
+
+                var songToReturn = mapper.Map<SongDto>(songToCreateEntity);
+
+                return CreatedAtRoute("GetSong",
+                    new { artistId, songId = songToCreateEntity.Id },
+                    songToReturn);
+            }
+
+            var songToPatch = mapper.Map<SongForUpdateDto>(songEntity);
+            patchDocument.ApplyTo(songToPatch, ModelState);
+
+            if (!TryValidateModel(songToPatch))
+            {
+                return ValidationProblem(ModelState);
+            }
+
+            mapper.Map(songToPatch, songEntity);
+            repository.Commit();
+
+            return NoContent();
+        }
+
+        // Overriding default ValidationProblem to return detailed 
+        // validation error defined in Startup class
+        public override ActionResult ValidationProblem(
+            [ActionResultObjectValue] ModelStateDictionary modelStateDictionary)
+        {
+            var options = HttpContext.RequestServices
+                .GetRequiredService<IOptions<ApiBehaviorOptions>>();
+            return (ActionResult)options.Value.InvalidModelStateResponseFactory(ControllerContext);
         }
     }
 }
