@@ -65,6 +65,20 @@ namespace MusicPlayer.API.Controllers
                 artistToReturn);               
         }
 
-        
+        [HttpDelete("{artistId}")]
+        public IActionResult DeleteArtist(Guid artistId)
+        {
+            var artist = repository.GetArtist(artistId);
+
+            if (artist == null)
+            {
+                return NotFound();
+            }
+
+            repository.DeleteArtist(artist);
+            repository.Commit();
+
+            return NoContent();
+        }
     }
 }

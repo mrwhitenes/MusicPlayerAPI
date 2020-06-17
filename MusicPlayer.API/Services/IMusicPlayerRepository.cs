@@ -15,9 +15,11 @@ namespace MusicPlayer.API.Services
             ArtistResourceParameters parameters);
         Artist GetArtist(Guid artistId);
         void AddArtist(Artist artist);
+        void DeleteArtist(Artist artist);
         IEnumerable<Song> GetSongs(Guid artistId);
         Song GetSong(Guid artistId, Guid songId);
         void AddSongForArtist(Guid artistId, Song song);
+        void DeleteSongForArtist(Song song);
         bool ArtistExists(Guid artistId);
         bool Commit();
     }

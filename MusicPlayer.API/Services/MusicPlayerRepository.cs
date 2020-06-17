@@ -47,7 +47,6 @@ namespace MusicPlayer.API.Services
             }
 
             song.ArtistId = artistId;
-            //song.Id = Guid.NewGuid();
 
             context.Songs.Add(song);
         }
@@ -60,6 +59,26 @@ namespace MusicPlayer.API.Services
         public bool Commit()
         {
             return context.SaveChanges() > 0;
+        }
+
+        public void DeleteArtist(Artist artist)
+        {
+            if (artist == null)
+            {
+                throw new ArgumentNullException(nameof(artist));
+            }
+
+            context.Artists.Remove(artist);
+        }
+
+        public void DeleteSongForArtist(Song song)
+        {
+            if (song == null)
+            {
+                throw new ArgumentNullException(nameof(song));
+            }
+
+            context.Songs.Remove(song);
         }
 
         public Artist GetArtist(Guid artistId)

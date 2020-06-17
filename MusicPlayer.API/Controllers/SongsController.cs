@@ -118,7 +118,7 @@ namespace MusicPlayer.API.Controllers
 
         [HttpPatch("{songId}")]
         public IActionResult PartiallyUpdateSongForArtist(Guid artistId,
-            Guid songId, 
+            Guid songId,
             [FromBody] JsonPatchDocument<SongForUpdateDto> patchDocument)
         {
             if (!repository.ArtistExists(artistId))
@@ -160,6 +160,27 @@ namespace MusicPlayer.API.Controllers
             }
 
             mapper.Map(songToPatch, songEntity);
+            repository.Commit();
+
+            return NoContent();
+        }
+
+        [HttpDelete("{songId}")]
+        public IActionResult DeleteSongForArtist(Guid artistId, Guid songId)
+        {
+            if (!repository.ArtistExists(artistId))
+            {
+                return NotFound();
+            }
+
+            var song = repository.GetSong(artistId, songId);
+
+            if (song == null)
+            {
+                return NotFound();
+            }
+
+            repository.DeleteSongForArtist(song);
             repository.Commit();
 
             return NoContent();
