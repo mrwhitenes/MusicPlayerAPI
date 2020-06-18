@@ -1,5 +1,6 @@
 ﻿using MusicPlayer.API.DbContexts;
 using MusicPlayer.API.Entities;
+using MusicPlayer.API.Helpers;
 using MusicPlayer.API.Models;
 using MusicPlayer.API.ResourceParameters;
 using System;
@@ -97,7 +98,7 @@ namespace MusicPlayer.API.Services
             return context.Artists.ToList();
         }
 
-        public IEnumerable<Artist> GetArtists(
+        public PagedList<Artist> GetArtists(
             ArtistResourceParameters parameters)
         {
             if (parameters == null)
@@ -105,19 +106,14 @@ namespace MusicPlayer.API.Services
                 throw new ArgumentNullException(nameof(parameters));
             }
 
-            if (string.IsNullOrWhiteSpace(parameters.MainCategory) &&
-                string.IsNullOrWhiteSpace(parameters.SearchQuery))
-            {
-                return GetArtists();
-            }
-
             var artists = context.Artists as IQueryable<Artist>;
 
             if (!string.IsNullOrWhiteSpace(parameters.MainCategory))
             {
                 var mainCategory = parameters.MainCategory.Trim();
-                artists = artists.Where(a => a.MainCategory == Enum.Parse<MainCategories>(mainCategory));
+                artists = artists.Where(a => a.MainCategory == mainCategory);
             }
+                    
 
             if (!string.IsNullOrWhiteSpace(parameters.SearchQuery))
             {
@@ -127,7 +123,8 @@ namespace MusicPlayer.API.Services
                                 a.LastName.Contains(stringQuery));
             }
 
-            return artists.ToList();
+            return PagedList<Artist>.Create(artists,
+                parameters.PageSize, parameters.PageNumber);
         }
 
         public Song GetSong(Guid artistId, Guid songId)

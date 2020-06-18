@@ -1,17 +1,13 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using MusicPlayer.API.Entities;
+using MusicPlayer.API.Helpers;
 using MusicPlayer.API.Models;
 using MusicPlayer.API.ResourceParameters;
 using MusicPlayer.API.Services;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.Text.Json;
 
 namespace MusicPlayer.API.Controllers
 {
@@ -29,11 +25,33 @@ namespace MusicPlayer.API.Controllers
             this.mapper = mapper;
         }
 
-        [HttpGet]
+        [HttpGet(Name = "GetArtists")]
         public ActionResult<IEnumerable<ArtistDto>> GetArtists(
             [FromQuery] ArtistResourceParameters parameters)
         {
             var artists = repository.GetArtists(parameters);
+
+            var previousArtistsPageLink = artists.HasPrev ?
+                CreateArtistsResourceUri(parameters,
+                ResourceUriType.PreviousPageUri) : null;
+
+            var nextArtistsPageLink = artists.HasNext ?
+                CreateArtistsResourceUri(parameters,
+                ResourceUriType.NextPageUri) : null;
+
+            var paginationMetadata = new
+            {
+                pageSize = artists.PageSize,
+                currentPage = artists.CurrentPage,
+                totalPages = artists.TotalPages,
+                totalCount = artists.TotalCount,
+                previousArtistsPageLink,
+                nextArtistsPageLink
+            };
+
+            Response.Headers.Add("X-Pagination",
+                JsonSerializer.Serialize(paginationMetadata));
+
             return Ok(mapper.Map<IEnumerable<ArtistDto>>(artists));
         }
 
@@ -62,7 +80,7 @@ namespace MusicPlayer.API.Controllers
 
             return CreatedAtRoute("GetArtist",
                 new { artistId = artistEntity.Id },
-                artistToReturn);               
+                artistToReturn);
         }
 
         [HttpDelete("{artistId}")]
@@ -79,6 +97,42 @@ namespace MusicPlayer.API.Controllers
             repository.Commit();
 
             return NoContent();
+        }
+
+        private string CreateArtistsResourceUri(
+            ArtistResourceParameters parameters,
+            ResourceUriType resourceUriType)
+        {
+            switch (resourceUriType)
+            {
+                case ResourceUriType.PreviousPageUri:
+                    return Url.Link("GetArtists",
+                        new
+                        {
+                            pageSize = parameters.PageSize,
+                            pageNumber = parameters.PageNumber - 1,
+                            mainCategory = parameters.MainCategory,
+                            searchQuery = parameters.SearchQuery
+                        });
+                case ResourceUriType.NextPageUri:
+                    return Url.Link("GetArtists",
+                        new
+                        {
+                            pageSize = parameters.PageSize,
+                            pageNumber = parameters.PageNumber + 1,
+                            mainCategory = parameters.MainCategory,
+                            searchQuery = parameters.SearchQuery
+                        });
+                default:
+                    return Url.Link("GetArtists",
+                        new
+                        {
+                            pageSize = parameters.PageSize,
+                            pageNumber = parameters.PageNumber,
+                            mainCategory = parameters.MainCategory,
+                            searchQuery = parameters.SearchQuery
+                        });
+            }
         }
     }
 }

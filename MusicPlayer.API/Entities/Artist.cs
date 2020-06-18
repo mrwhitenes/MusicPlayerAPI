@@ -19,7 +19,7 @@ namespace MusicPlayer.API.Entities
         [Required]
         public DateTimeOffset DateOfBirth { get; set; }
         [Required]
-        public MainCategories MainCategory { get; set; }
+        public string MainCategory { get; set; }
 
         public ICollection<Song> Songs { get; set; }
             = new List<Song>();

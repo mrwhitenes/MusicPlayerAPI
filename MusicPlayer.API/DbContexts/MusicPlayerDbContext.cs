@@ -28,7 +28,7 @@ namespace MusicPlayer.API.DbContexts
                     FirstName = "Michael",
                     LastName = "Jackson",
                     DateOfBirth = new DateTime(1958, 8, 29),
-                    MainCategory = MainCategories.Pop
+                    MainCategory = "Pop"
                 },
                 new Artist()
                 {
@@ -36,7 +36,7 @@ namespace MusicPlayer.API.DbContexts
                     FirstName = "Marshall",
                     LastName = "Mathers",
                     DateOfBirth = new DateTime(1972, 10, 17),
-                    MainCategory = MainCategories.Rap
+                    MainCategory = "Rap"
                 },
                 new Artist()
                 {
@@ -44,7 +44,7 @@ namespace MusicPlayer.API.DbContexts
                     FirstName = "Luis",
                     LastName = "Armstrong",
                     DateOfBirth = new DateTime(1901, 8, 4),
-                    MainCategory = MainCategories.Jazz
+                    MainCategory = "Jazz"
                 },
                 new Artist()
                 {
@@ -52,7 +52,7 @@ namespace MusicPlayer.API.DbContexts
                     FirstName = "Elvis",
                     LastName = "Presley",
                     DateOfBirth = new DateTime(1916, 4, 10),
-                    MainCategory = MainCategories.Rock
+                    MainCategory = "Rock"
                 },
                 new Artist()
                 {
@@ -60,7 +60,7 @@ namespace MusicPlayer.API.DbContexts
                     FirstName = "The",
                     LastName = "Beatles",
                     DateOfBirth = new DateTime(1940, 10, 9),
-                    MainCategory = MainCategories.Rock
+                    MainCategory = "Rock"
                 }
                 );
 

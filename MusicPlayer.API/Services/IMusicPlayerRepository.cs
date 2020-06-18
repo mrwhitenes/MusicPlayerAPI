@@ -1,4 +1,5 @@
 ﻿using MusicPlayer.API.Entities;
+using MusicPlayer.API.Helpers;
 using MusicPlayer.API.Models;
 using MusicPlayer.API.ResourceParameters;
 using System;
@@ -11,7 +12,7 @@ namespace MusicPlayer.API.Services
     public interface IMusicPlayerRepository
     {
         IEnumerable<Artist> GetArtists();
-        IEnumerable<Artist> GetArtists(
+        PagedList<Artist> GetArtists(
             ArtistResourceParameters parameters);
         Artist GetArtist(Guid artistId);
         void AddArtist(Artist artist);
