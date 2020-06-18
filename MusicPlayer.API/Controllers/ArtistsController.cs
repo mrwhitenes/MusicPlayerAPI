@@ -17,18 +17,27 @@ namespace MusicPlayer.API.Controllers
     {
         private readonly IMusicPlayerRepository repository;
         private readonly IMapper mapper;
+        private readonly IPropertyMappingService mappingService;
 
         public ArtistsController(IMusicPlayerRepository repository,
-            IMapper mapper)
+            IMapper mapper,
+            IPropertyMappingService mappingService)
         {
             this.repository = repository;
             this.mapper = mapper;
+            this.mappingService = mappingService;
         }
 
         [HttpGet(Name = "GetArtists")]
         public ActionResult<IEnumerable<ArtistDto>> GetArtists(
             [FromQuery] ArtistResourceParameters parameters)
         {
+            if (!mappingService.ValidMappingExistsFor<ArtistDto, Artist>
+                (parameters.OrderBy))
+            {
+                return BadRequest();
+            }
+
             var artists = repository.GetArtists(parameters);
 
             var previousArtistsPageLink = artists.HasPrev ?
@@ -109,6 +118,7 @@ namespace MusicPlayer.API.Controllers
                     return Url.Link("GetArtists",
                         new
                         {
+                            orderBy = parameters.OrderBy,
                             pageSize = parameters.PageSize,
                             pageNumber = parameters.PageNumber - 1,
                             mainCategory = parameters.MainCategory,
@@ -118,6 +128,7 @@ namespace MusicPlayer.API.Controllers
                     return Url.Link("GetArtists",
                         new
                         {
+                            orderBy = parameters.OrderBy,
                             pageSize = parameters.PageSize,
                             pageNumber = parameters.PageNumber + 1,
                             mainCategory = parameters.MainCategory,
@@ -127,6 +138,7 @@ namespace MusicPlayer.API.Controllers
                     return Url.Link("GetArtists",
                         new
                         {
+                            orderBy = parameters.OrderBy,
                             pageSize = parameters.PageSize,
                             pageNumber = parameters.PageNumber,
                             mainCategory = parameters.MainCategory,

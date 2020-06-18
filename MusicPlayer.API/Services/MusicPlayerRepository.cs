@@ -12,10 +12,13 @@ namespace MusicPlayer.API.Services
     public class MusicPlayerRepository : IMusicPlayerRepository
     {
         private readonly MusicPlayerDbContext context;
+        private readonly IPropertyMappingService mappingService;
 
-        public MusicPlayerRepository(MusicPlayerDbContext context)
+        public MusicPlayerRepository(MusicPlayerDbContext context,
+            IPropertyMappingService mappingService)
         {
             this.context = context;
+            this.mappingService = mappingService;
         }
 
         public void AddArtist(Artist artist)
@@ -108,19 +111,29 @@ namespace MusicPlayer.API.Services
 
             var artists = context.Artists as IQueryable<Artist>;
 
+            // Filtering
             if (!string.IsNullOrWhiteSpace(parameters.MainCategory))
             {
                 var mainCategory = parameters.MainCategory.Trim();
                 artists = artists.Where(a => a.MainCategory == mainCategory);
             }
                     
-
+            // Searching
             if (!string.IsNullOrWhiteSpace(parameters.SearchQuery))
             {
                 var stringQuery = parameters.SearchQuery.Trim();
                 artists = artists
                     .Where(a => a.FirstName.Contains(stringQuery) ||
                                 a.LastName.Contains(stringQuery));
+            }
+
+            if (!string.IsNullOrWhiteSpace(parameters.OrderBy))
+            {
+                var artistPropertiesMappingDictionary =
+                    mappingService.GetPropertyMapping<ArtistDto, Artist>();
+
+                artists = artists.ApplySort(parameters.OrderBy,
+                    artistPropertiesMappingDictionary);
             }
 
             return PagedList<Artist>.Create(artists,
