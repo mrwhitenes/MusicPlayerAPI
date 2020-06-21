@@ -29,7 +29,7 @@ namespace MusicPlayer.API.Controllers
         }
 
         [HttpGet(Name = "GetArtists")]
-        public ActionResult<IEnumerable<ArtistDto>> GetArtists(
+        public IActionResult GetArtists(
             [FromQuery] ArtistResourceParameters parameters)
         {
             if (!mappingService.ValidMappingExistsFor<ArtistDto, Artist>
@@ -61,7 +61,8 @@ namespace MusicPlayer.API.Controllers
             Response.Headers.Add("X-Pagination",
                 JsonSerializer.Serialize(paginationMetadata));
 
-            return Ok(mapper.Map<IEnumerable<ArtistDto>>(artists));
+            return Ok(mapper.Map<IEnumerable<ArtistDto>>(artists)
+                .ShapeData(parameters.Fields));
         }
 
         [HttpGet]
@@ -118,6 +119,7 @@ namespace MusicPlayer.API.Controllers
                     return Url.Link("GetArtists",
                         new
                         {
+                            fields = parameters.Fields,
                             orderBy = parameters.OrderBy,
                             pageSize = parameters.PageSize,
                             pageNumber = parameters.PageNumber - 1,
@@ -128,6 +130,7 @@ namespace MusicPlayer.API.Controllers
                     return Url.Link("GetArtists",
                         new
                         {
+                            fields = parameters.Fields,
                             orderBy = parameters.OrderBy,
                             pageSize = parameters.PageSize,
                             pageNumber = parameters.PageNumber + 1,
@@ -138,6 +141,7 @@ namespace MusicPlayer.API.Controllers
                     return Url.Link("GetArtists",
                         new
                         {
+                            fields = parameters.Fields,
                             orderBy = parameters.OrderBy,
                             pageSize = parameters.PageSize,
                             pageNumber = parameters.PageNumber,

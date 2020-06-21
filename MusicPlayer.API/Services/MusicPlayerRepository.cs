@@ -127,6 +127,7 @@ namespace MusicPlayer.API.Services
                                 a.LastName.Contains(stringQuery));
             }
 
+            // Ordering
             if (!string.IsNullOrWhiteSpace(parameters.OrderBy))
             {
                 var artistPropertiesMappingDictionary =
