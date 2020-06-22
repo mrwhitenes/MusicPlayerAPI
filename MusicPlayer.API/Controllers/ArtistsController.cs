@@ -18,14 +18,17 @@ namespace MusicPlayer.API.Controllers
         private readonly IMusicPlayerRepository repository;
         private readonly IMapper mapper;
         private readonly IPropertyMappingService mappingService;
+        private readonly IPropertyCheckerService propertyChecker;
 
         public ArtistsController(IMusicPlayerRepository repository,
             IMapper mapper,
-            IPropertyMappingService mappingService)
+            IPropertyMappingService mappingService,
+            IPropertyCheckerService propertyChecker)
         {
             this.repository = repository;
             this.mapper = mapper;
             this.mappingService = mappingService;
+            this.propertyChecker = propertyChecker;
         }
 
         [HttpGet(Name = "GetArtists")]
@@ -34,6 +37,11 @@ namespace MusicPlayer.API.Controllers
         {
             if (!mappingService.ValidMappingExistsFor<ArtistDto, Artist>
                 (parameters.OrderBy))
+            {
+                return BadRequest();
+            }
+
+            if (!propertyChecker.TypeHasProperties<ArtistDto>(parameters.Fields))
             {
                 return BadRequest();
             }
@@ -67,8 +75,13 @@ namespace MusicPlayer.API.Controllers
 
         [HttpGet]
         [Route("{artistId}", Name = "GetArtist")]
-        public ActionResult<ArtistDto> GetArtist(Guid artistId)
+        public ActionResult<ArtistDto> GetArtist(Guid artistId, string fields)
         {
+            if (!propertyChecker.TypeHasProperties<ArtistDto>(fields))
+            {
+                return BadRequest();
+            }
+
             var artist = repository.GetArtist(artistId);
 
             if (artist == null)
@@ -76,7 +89,7 @@ namespace MusicPlayer.API.Controllers
                 return NotFound();
             }
 
-            return Ok(mapper.Map<ArtistDto>(artist));
+            return Ok(mapper.Map<ArtistDto>(artist).ShapeData(fields));
         }
 
         [HttpPost]

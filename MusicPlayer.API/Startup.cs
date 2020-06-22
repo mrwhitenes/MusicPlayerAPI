@@ -69,6 +69,8 @@ namespace MusicPlayer.API
 
             services.AddTransient<IPropertyMappingService, PropertyMappingService>();
 
+            services.AddTransient<IPropertyCheckerService, PropertyCheckerService>();
+
             services.AddDbContext<MusicPlayerDbContext>(options =>
             {
                 options.UseSqlServer(Configuration.GetConnectionString("MusicPlayerDbConnStr"));
