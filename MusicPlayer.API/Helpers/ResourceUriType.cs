@@ -8,6 +8,7 @@ namespace MusicPlayer.API.Helpers
     public enum ResourceUriType
     {
         PreviousPageUri,
-        NextPageUri
+        NextPageUri,
+        Current
     }
 }

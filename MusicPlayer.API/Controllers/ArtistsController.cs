@@ -7,6 +7,7 @@ using MusicPlayer.API.ResourceParameters;
 using MusicPlayer.API.Services;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 
 namespace MusicPlayer.API.Controllers
@@ -48,29 +49,38 @@ namespace MusicPlayer.API.Controllers
 
             var artists = repository.GetArtists(parameters);
 
-            var previousArtistsPageLink = artists.HasPrev ?
-                CreateArtistsResourceUri(parameters,
-                ResourceUriType.PreviousPageUri) : null;
-
-            var nextArtistsPageLink = artists.HasNext ?
-                CreateArtistsResourceUri(parameters,
-                ResourceUriType.NextPageUri) : null;
-
             var paginationMetadata = new
             {
                 pageSize = artists.PageSize,
                 currentPage = artists.CurrentPage,
                 totalPages = artists.TotalPages,
-                totalCount = artists.TotalCount,
-                previousArtistsPageLink,
-                nextArtistsPageLink
+                totalCount = artists.TotalCount
             };
 
             Response.Headers.Add("X-Pagination",
                 JsonSerializer.Serialize(paginationMetadata));
 
-            return Ok(mapper.Map<IEnumerable<ArtistDto>>(artists)
-                .ShapeData(parameters.Fields));
+            var links = CreateLinksForArtists(parameters,
+                artists.HasNext, artists.HasPrev);
+
+            var shapedArtists = mapper.Map<IEnumerable<ArtistDto>>(artists)
+                .ShapeData(parameters.Fields);
+
+            var shapedArtistsWithLinks = shapedArtists.Select(artist =>
+            {
+                var artistAsDictionary = artist as IDictionary<string, object>;
+                var artistLinks = CreateLinksForArtist((Guid)artistAsDictionary["Id"], null);
+                artistAsDictionary.Add("links", artistLinks);
+                return artistAsDictionary;
+            });
+
+            var linkedCollectionResource = new
+            {
+                value = shapedArtistsWithLinks,
+                links
+            };
+
+            return Ok(linkedCollectionResource);
         }
 
         [HttpGet]
@@ -89,10 +99,18 @@ namespace MusicPlayer.API.Controllers
                 return NotFound();
             }
 
-            return Ok(mapper.Map<ArtistDto>(artist).ShapeData(fields));
+            var links = CreateLinksForArtist(artistId, fields);
+
+            var linkedResource = 
+                mapper.Map<ArtistDto>(artist).ShapeData(fields)
+                as IDictionary<string, object>;
+
+            linkedResource.Add("links", links);
+
+            return Ok(linkedResource);
         }
 
-        [HttpPost]
+        [HttpPost(Name = "CreateArtist")]
         public ActionResult<ArtistDto> CreateArtist(
             ArtistForCreationDto artist)
         {
@@ -101,12 +119,19 @@ namespace MusicPlayer.API.Controllers
             repository.Commit();
             var artistToReturn = mapper.Map<ArtistDto>(artistEntity);
 
+            var links = CreateLinksForArtist(artistToReturn.Id, null);
+
+            var linkedResource = artistToReturn.ShapeData(null)
+                as IDictionary<string, object>;
+
+            linkedResource.Add("links", links);
+
             return CreatedAtRoute("GetArtist",
-                new { artistId = artistEntity.Id },
-                artistToReturn);
+                new { artistId = linkedResource["Id"] },
+                linkedResource);
         }
 
-        [HttpDelete("{artistId}")]
+        [HttpDelete("{artistId}", Name = "DeleteArtist")]
         public IActionResult DeleteArtist(Guid artistId)
         {
             var artist = repository.GetArtist(artistId);
@@ -150,6 +175,7 @@ namespace MusicPlayer.API.Controllers
                             mainCategory = parameters.MainCategory,
                             searchQuery = parameters.SearchQuery
                         });
+                case ResourceUriType.Current:
                 default:
                     return Url.Link("GetArtists",
                         new
@@ -162,6 +188,65 @@ namespace MusicPlayer.API.Controllers
                             searchQuery = parameters.SearchQuery
                         });
             }
+        }
+
+        public IEnumerable<LinkDto> CreateLinksForArtist(Guid artistId, string fields)
+        {
+            var links = new List<LinkDto>();
+
+            if (string.IsNullOrWhiteSpace(fields))
+            {
+                links.Add(new LinkDto(Url.Link("GetArtist", new { artistId }),
+                    "self",
+                    "GET"));
+            }
+            else
+            {
+                links.Add(new LinkDto(Url.Link("GetArtist", new { artistId, fields }),
+                    "self",
+                    "GET"));
+            }
+
+            links.Add(new LinkDto(Url.Link("GetSongsForArtist", new { artistId }),
+                "songs",
+                "GET"));
+
+            links.Add(new LinkDto(Url.Link("DeleteArtist", new { artistId }),
+                "delete_artist",
+                "DELETE"));
+
+            links.Add(new LinkDto(Url.Link("CreateSongForArtist", new { artistId }),
+                "create_song_for_artist",
+                "POST"));
+
+            return links;
+        }
+
+        public IEnumerable<LinkDto> CreateLinksForArtists(
+            ArtistResourceParameters parameters,
+            bool hasNext, bool hasPrevious)
+        {
+            var links = new List<LinkDto>();
+
+            links.Add(new LinkDto(CreateArtistsResourceUri(
+                parameters, ResourceUriType.Current), 
+                "self", "GET"));
+
+            if (hasNext)
+            {
+                links.Add(new LinkDto(CreateArtistsResourceUri(
+                    parameters, ResourceUriType.NextPageUri),
+                    "nextPage", "GET"));
+            }
+
+            if (hasPrevious)
+            {
+                links.Add(new LinkDto(CreateArtistsResourceUri(
+                    parameters, ResourceUriType.PreviousPageUri),
+                    "previousPage", "GET"));
+            }
+
+            return links;
         }
     }
 }

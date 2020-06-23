@@ -30,7 +30,7 @@ namespace MusicPlayer.API.Controllers
             this.mapper = mapper;
         }
 
-        [HttpGet]
+        [HttpGet(Name = "GetSongsForArtist")]
         public ActionResult<IEnumerable<SongDto>> GetSongsForArtist(
             Guid artistId)
         {
@@ -62,7 +62,7 @@ namespace MusicPlayer.API.Controllers
             return Ok(mapper.Map<SongDto>(song));
         }
 
-        [HttpPost]
+        [HttpPost(Name = "CreateSongForArtist")]
         public ActionResult<SongDto> CreateSongForArtist(Guid artistId,
             SongForCreationDto song)
         {
