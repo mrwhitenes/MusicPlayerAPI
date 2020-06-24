@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Configuration;
@@ -65,6 +66,17 @@ namespace MusicPlayer.API
                         ContentTypes = { "application/problem+json" }
                     };
                 };
+            });
+
+            services.Configure<MvcOptions>(config =>
+            {
+                var newtonsoftJsonOutputFormatter = config.OutputFormatters
+                    .OfType<NewtonsoftJsonOutputFormatter>()?.FirstOrDefault();
+
+                if (newtonsoftJsonOutputFormatter != null)
+                {
+                    newtonsoftJsonOutputFormatter.SupportedMediaTypes.Add("application/vnd.mrwhiteness.hateoas+json");
+                }
             });
 
             services.AddTransient<IPropertyMappingService, PropertyMappingService>();

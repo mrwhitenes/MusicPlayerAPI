@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Net.Http.Headers;
 using MusicPlayer.API.Entities;
 using MusicPlayer.API.Helpers;
 using MusicPlayer.API.Models;
@@ -32,9 +33,16 @@ namespace MusicPlayer.API.Controllers
             this.propertyChecker = propertyChecker;
         }
 
+        [Produces("application/json",
+            "application/vnd.mrwhiteness.hateoas+json",
+            "application/vnd.mrwhiteness.friendly+json",
+            "application/vnd.mrwhiteness.friendly.hateoas+json",
+            "application/vnd.mrwhiteness.full+json",
+            "application/vnd.mrwhiteness.full.hateoas+json")]
         [HttpGet(Name = "GetArtists")]
         public IActionResult GetArtists(
-            [FromQuery] ArtistResourceParameters parameters)
+            [FromQuery] ArtistResourceParameters parameters,
+            [FromHeader(Name = "Accept")] string mediaType)
         {
             if (!mappingService.ValidMappingExistsFor<ArtistDto, Artist>
                 (parameters.OrderBy))
@@ -43,6 +51,12 @@ namespace MusicPlayer.API.Controllers
             }
 
             if (!propertyChecker.TypeHasProperties<ArtistDto>(parameters.Fields))
+            {
+                return BadRequest();
+            }
+
+            if (!MediaTypeHeaderValue.TryParse(mediaType,
+                out MediaTypeHeaderValue parsedMediaType))
             {
                 return BadRequest();
             }
@@ -60,34 +74,99 @@ namespace MusicPlayer.API.Controllers
             Response.Headers.Add("X-Pagination",
                 JsonSerializer.Serialize(paginationMetadata));
 
-            var links = CreateLinksForArtists(parameters,
-                artists.HasNext, artists.HasPrev);
+            var includeLinks = parsedMediaType.SubTypeWithoutSuffix.EndsWith(
+                "hateoas", StringComparison.InvariantCultureIgnoreCase);
 
-            var shapedArtists = mapper.Map<IEnumerable<ArtistDto>>(artists)
+            IEnumerable<LinkDto> links = new List<LinkDto>();
+
+            if (includeLinks)
+            {
+                links = CreateLinksForArtists(parameters,
+                    artists.HasNext, artists.HasPrev); 
+            }
+
+            var primaryMediaType = includeLinks ?
+                parsedMediaType.SubTypeWithoutSuffix
+                .Substring(0, parsedMediaType.SubTypeWithoutSuffix.Length - 8) :
+                parsedMediaType.SubTypeWithoutSuffix;
+
+            if (primaryMediaType == "vnd.mrwhiteness.full")
+            {
+                var fullResources = mapper.Map
+                    <IEnumerable<ArtistFullDto>>(artists)
+                    .ShapeData(parameters.Fields);
+
+                if (includeLinks)
+                {
+                    var fullResourcesWithLinks = fullResources.Select(artist =>
+                    {
+                        var artistAsDictionary = artist
+                            as IDictionary<string, object>;
+                        var artistLinks = CreateLinksForArtist(
+                            (Guid)artistAsDictionary["Id"], null);
+                        artistAsDictionary.Add("links", artistLinks);
+                        return artistAsDictionary;
+                    });
+
+                    var fullLinkedCollectionResource = new
+                    {
+                        values = fullResourcesWithLinks,
+                        links
+                    };
+
+                    return Ok(fullLinkedCollectionResource);
+                }
+
+                return Ok(fullResources);
+            }
+
+            var friendlyResources = mapper.Map
+                <IEnumerable<ArtistDto>>(artists)
                 .ShapeData(parameters.Fields);
 
-            var shapedArtistsWithLinks = shapedArtists.Select(artist =>
+            if (includeLinks)
             {
-                var artistAsDictionary = artist as IDictionary<string, object>;
-                var artistLinks = CreateLinksForArtist((Guid)artistAsDictionary["Id"], null);
-                artistAsDictionary.Add("links", artistLinks);
-                return artistAsDictionary;
-            });
+                var friendlyResourcesWithLinks = friendlyResources.Select(artist =>
+                {
+                    var artistAsDictionary = artist
+                           as IDictionary<string, object>;
+                    var artistLinks = CreateLinksForArtist(
+                        (Guid)artistAsDictionary["Id"], null);
+                    artistAsDictionary.Add("links", artistLinks);
+                    return artistAsDictionary;
+                });
 
-            var linkedCollectionResource = new
-            {
-                value = shapedArtistsWithLinks,
-                links
-            };
+                var friendlyLinkedCollectionResource = new
+                {
+                    values = friendlyResourcesWithLinks,
+                    links
+                };
 
-            return Ok(linkedCollectionResource);
+                return Ok(friendlyLinkedCollectionResource);
+            }
+
+            return Ok(friendlyResources);
         }
 
+
+        [Produces("application/json",
+            "application/vnd.mrwhiteness.hateoas+json",
+            "application/vnd.mrwhiteness.friendly+json",
+            "application/vnd.mrwhiteness.friendly.hateoas+json",
+            "application/vnd.mrwhiteness.full+json",
+            "application/vnd.mrwhiteness.full.hateoas+json")]
         [HttpGet]
         [Route("{artistId}", Name = "GetArtist")]
-        public ActionResult<ArtistDto> GetArtist(Guid artistId, string fields)
+        public ActionResult<ArtistDto> GetArtist(Guid artistId, string fields,
+            [FromHeader(Name = "Accept")] string mediaType)
         {
             if (!propertyChecker.TypeHasProperties<ArtistDto>(fields))
+            {
+                return BadRequest();
+            }
+
+            if (!MediaTypeHeaderValue.TryParse(mediaType,
+                out MediaTypeHeaderValue parsedMediaType))
             {
                 return BadRequest();
             }
@@ -99,15 +178,44 @@ namespace MusicPlayer.API.Controllers
                 return NotFound();
             }
 
-            var links = CreateLinksForArtist(artistId, fields);
+            // Choosing right type to return 
 
-            var linkedResource = 
-                mapper.Map<ArtistDto>(artist).ShapeData(fields)
-                as IDictionary<string, object>;
+            // Checking if type includes hateoas
+            var includeLinks = parsedMediaType.SubTypeWithoutSuffix.EndsWith(
+                "hateoas", StringComparison.InvariantCultureIgnoreCase);
 
-            linkedResource.Add("links", links);
+            IEnumerable<LinkDto> links = new List<LinkDto>();
+            links = CreateLinksForArtist(artistId, fields);
 
-            return Ok(linkedResource);
+            var primaryMediaType = includeLinks ?
+                parsedMediaType.SubTypeWithoutSuffix
+                .Substring(0, parsedMediaType.SubTypeWithoutSuffix.Length - 8) :
+                parsedMediaType.SubTypeWithoutSuffix;
+
+            // Returning ArtistFullDto
+            if (primaryMediaType == "vnd.mrwhiteness.full")
+            {
+                var fullResource = mapper.Map<ArtistFullDto>(artist)
+                    .ShapeData(fields) as IDictionary<string, object>;
+
+                if (includeLinks)
+                {
+                    fullResource.Add("links", links);
+                }
+
+                return Ok(fullResource);
+            }
+
+            // Returning friendly ArtistDto
+            var friendlyResource = mapper.Map<ArtistDto>(artist)
+                    .ShapeData(fields) as IDictionary<string, object>;
+
+            if (includeLinks)
+            {
+                friendlyResource.Add("links", links);
+            }
+
+            return Ok(friendlyResource);
         }
 
         [HttpPost(Name = "CreateArtist")]
@@ -190,32 +298,38 @@ namespace MusicPlayer.API.Controllers
             }
         }
 
-        public IEnumerable<LinkDto> CreateLinksForArtist(Guid artistId, string fields)
+        public IEnumerable<LinkDto> CreateLinksForArtist(
+            Guid artistId, string fields)
         {
             var links = new List<LinkDto>();
 
             if (string.IsNullOrWhiteSpace(fields))
             {
-                links.Add(new LinkDto(Url.Link("GetArtist", new { artistId }),
+                links.Add(new LinkDto(Url.Link(
+                    "GetArtist", new { artistId }),
                     "self",
                     "GET"));
             }
             else
             {
-                links.Add(new LinkDto(Url.Link("GetArtist", new { artistId, fields }),
+                links.Add(new LinkDto(Url.Link(
+                    "GetArtist", new { artistId, fields }),
                     "self",
                     "GET"));
             }
 
-            links.Add(new LinkDto(Url.Link("GetSongsForArtist", new { artistId }),
+            links.Add(new LinkDto(Url.Link(
+                "GetSongsForArtist", new { artistId }),
                 "songs",
                 "GET"));
 
-            links.Add(new LinkDto(Url.Link("DeleteArtist", new { artistId }),
+            links.Add(new LinkDto(Url.Link(
+                "DeleteArtist", new { artistId }),
                 "delete_artist",
                 "DELETE"));
 
-            links.Add(new LinkDto(Url.Link("CreateSongForArtist", new { artistId }),
+            links.Add(new LinkDto(Url.Link(
+                "CreateSongForArtist", new { artistId }),
                 "create_song_for_artist",
                 "POST"));
 
@@ -229,7 +343,7 @@ namespace MusicPlayer.API.Controllers
             var links = new List<LinkDto>();
 
             links.Add(new LinkDto(CreateArtistsResourceUri(
-                parameters, ResourceUriType.Current), 
+                parameters, ResourceUriType.Current),
                 "self", "GET"));
 
             if (hasNext)

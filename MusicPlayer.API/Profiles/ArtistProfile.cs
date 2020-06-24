@@ -20,16 +20,9 @@ namespace MusicPlayer.API.Profiles
                 .ForMember(
                     dest => dest.Age,
                     opt => opt.MapFrom(src => src.DateOfBirth.CalculateAge())
-                )
-                .ForMember(
-                    dest => dest.MainCategory,
-                    opt => opt.MapFrom(src => src.MainCategory.ToString())
                 );
-            CreateMap<Models.ArtistForCreationDto, Entities.Artist>()
-                .ForMember(
-                    dest => dest.MainCategory,
-                    opt => opt.MapFrom(src => Enum.Parse<MainCategories>(src.MainCategory))
-                );
+            CreateMap<Models.ArtistForCreationDto, Entities.Artist>();
+            CreateMap<Entities.Artist, Models.ArtistFullDto>();
         }
     }
 }
